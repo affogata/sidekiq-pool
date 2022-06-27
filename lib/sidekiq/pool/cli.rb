@@ -198,16 +198,16 @@ module Sidekiq
         pid = fork do
           Dir.chdir(working_directory) if working_directory
           opts = parse_options(command.split)
-          options.merge!(opts)
+          config.merge!(opts)
 
           @self_write.close
           $0 = 'sidekiq starting'
-          options[:index] = child_index
+          config[:index] = child_index
 
           # reset child identity
           @@process_nonce = nil
           @@identity = nil
-          options[:identity] = identity
+          config[:identity] = identity
 
           run_after_fork_hooks
           run_child
@@ -279,12 +279,12 @@ module Sidekiq
       end
 
       def add_reload_marker
-        return unless options[:pidfile]
-        File.write([options[:pidfile], '.reload'].join, '')
+        return unless config[:pidfile]
+        File.write([config[:pidfile], '.reload'].join, '')
       end
 
       def drop_reload_marker
-        reload_marker = [options[:pidfile], '.reload'].join
+        reload_marker = [config[:pidfile], '.reload'].join
         File.unlink(reload_marker) if File.exist?(reload_marker)
       end
 
@@ -336,7 +336,7 @@ module Sidekiq
         time = Time.now
         loop do
           wait_time = (Time.now - time).to_i
-          if wait_time > options[:timeout] + 2
+          if wait_time > config[:timeout] + 2
             logger.warn("Children didn't stop in #{wait_time}s, killing")
             signal_to_pool('KILL', given_pool)
           else
@@ -360,7 +360,7 @@ module Sidekiq
         parts = [
           'sidekiq-pool',
           Sidekiq::Pool::VERSION,
-          options[:tag]
+          config[:tag]
         ]
 
         parts << 'stopping' if stopping?
