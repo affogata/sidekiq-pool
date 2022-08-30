@@ -204,7 +204,9 @@ module Sidekiq
 
         pid = fork do
           Dir.chdir(working_directory) if working_directory
+          
           opts = parse_options(command.split)
+          opts = parse_config(opts[:config_file]).merge(opts) if opts[:config_file]
           options.merge!(opts)
 
           @self_write.close
